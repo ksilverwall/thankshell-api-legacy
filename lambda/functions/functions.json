@@ -81,9 +81,6 @@
     ]
   },
   {
-    "FunctionName": "thankshell_login_page_manager"
-  },
-  {
     "FunctionName": "thankshell_create_user_link",
     "Layers": [
       {
@@ -91,8 +88,5 @@
         "CodeSize": 1282
       }
     ]
-  },
-  {
-    "FunctionName": "thankshell_get_wallet_info"
   }
 ]

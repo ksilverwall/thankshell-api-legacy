@@ -1,7 +1,7 @@
 let Auth = require('thankshell-libs/auth.js');
 let AWS = require("aws-sdk");
 
-async function getHistory(dynamo, account, stage) {
+let getHistory = async(dynamo, account, stage) => {
     let tableName = {
         'production': {
             'info': 'table_info',
@@ -12,8 +12,6 @@ async function getHistory(dynamo, account, stage) {
             'data': 'dev_remittance_transactions',
         },
     };
-
-    let adminMode = account == null;
 
     let history = {
         Count: 0,
@@ -30,50 +28,95 @@ async function getHistory(dynamo, account, stage) {
     let maxBlockId = tableInfo.Item ? Math.floor(tableInfo.Item.current_id_sequence / 1000) : 0;
 
     for (let blockId=maxBlockId; blockId >= 0; --blockId) {
-        let params;
-        if(adminMode) {
-            params = {
-                TableName: tableName[stage]['data'],
-                KeyConditionExpression: "block_id = :block",
-                ExpressionAttributeValues: {
-                    ":block": blockId
-                }
-            };
-        } else {
-            params = {
-                TableName: tableName[stage]['data'],
-                KeyConditionExpression: "block_id = :block",
-                FilterExpression: "from_account = :account or to_account = :account",
-                ExpressionAttributeValues: {
-                    ":block": blockId,
-                    ":account": account
-                }
-            };
-        }
+        let params = {
+            TableName: tableName[stage]['data'],
+            KeyConditionExpression: "block_id = :block",
+            FilterExpression: "from_account = :account or to_account = :account",
+            ExpressionAttributeValues: {
+                ":block": blockId,
+                ":account": account
+            }
+        };
 
-        var data = await dynamo.query(params).promise();
+        let data = await dynamo.query(params).promise();
+
         history.Items = history.Items.concat(data.Items);
         history.Count += data.Count;
     }
 
     return history;
-}
+};
 
-let getTargetUserId = (event) => {
-    if (event.multiValueQueryStringParameters && event.multiValueQueryStringParameters['user_id']) {
-        return event.multiValueQueryStringParameters['user_id'][0];
-    } else {
-        return null;
+let getAllHistory = async(dynamo, stage) => {
+    let tableName = {
+        'production': {
+            'info': 'table_info',
+            'data': 'remittance_transactions',
+        },
+        'develop': {
+            'info': 'dev_table_info',
+            'data': 'dev_remittance_transactions',
+        },
+    };
+
+    let history = {
+        Count: 0,
+        Items: []
+    };
+
+    let tableInfo = await dynamo.get({
+        TableName: tableName[stage]['info'],
+        Key:{
+            'name': tableName[stage]['data'],
+        }
+    }).promise();
+
+    let maxBlockId = tableInfo.Item ? Math.floor(tableInfo.Item.current_id_sequence / 1000) : 0;
+
+    for (let blockId=maxBlockId; blockId >= 0; --blockId) {
+        let params = {
+            TableName: tableName[stage]['data'],
+            KeyConditionExpression: "block_id = :block",
+            ExpressionAttributeValues: {
+                ":block": blockId
+            }
+        };
+
+        let data = await dynamo.query(params).promise();
+
+        history.Items = history.Items.concat(data.Items);
+        history.Count += data.Count;
     }
-}
+
+    return history;
+};
+
+let isAdmin = async(dynamo, groupId, userId) => {
+    let data = await dynamo.get({
+        TableName: 'thankshell_groups',
+            Key:{
+                'group_id': groupId,
+            }
+    }).promise();
+
+    return data.Item.admin.values.includes(userId);
+};
 
 let getTransactions = async(userId, event) => {
     let dynamo = new AWS.DynamoDB.DocumentClient();
 
     let stage = event.requestContext.stage;
 
-    let targetUser = getTargetUserId(event);
-    let history = await getHistory(dynamo, targetUser, stage);
+    let history;
+    if (event.multiValueQueryStringParameters && event.multiValueQueryStringParameters['user_id']) {
+        let targetUser = event.multiValueQueryStringParameters['user_id'][0];
+        history = await getHistory(dynamo, targetUser, stage);
+    } else {
+        if (!await isAdmin(dynamo, 'sla', userId)) {
+            throw Error("管理者権限ではありません");
+        }
+        history = await getAllHistory(dynamo, stage);
+    }
 
     let carried = 0;
 

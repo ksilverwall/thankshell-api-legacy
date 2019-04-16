@@ -136,14 +136,16 @@ class TransactionController
 /**
  * FIXME: Move to Auth
  */
-async function isAdmin(user) {
-    //FIXME Check by database info
-    if (user == 'Mao' || user == 'ksilverwall') {
-        return true;
-    }
+let isAdmin = async(dynamo, groupId, userId) => {
+    let data = await dynamo.get({
+        TableName: 'thankshell_groups',
+            Key:{
+                'group_id': groupId,
+            }
+    }).promise();
 
-    return false;
-}
+    return data.Item.admin.values.includes(userId);
+};
 
 class AccountManager {
     constructor(){
@@ -194,11 +196,13 @@ let getTableInfo = (stage) => {
     return tableInfoList[stage];
 };
 
-let createTransaction = async(username, pathParameter, body, stage) => {
+let createTransaction = async(userId, pathParameter, body, stage) => {
     let controller = new TransactionController(getTableInfo(stage));
     let transaction = {};
+    let groupId = 'sla';
+    let dynamo = new AWS.DynamoDB.DocumentClient();
 
-    if(!await isAdmin(username)) {
+    if(!await isAdmin(dynamo, groupId, userId)) {
         throw new Error("この取引を発行する権限がありません");
     }
     transaction.token = pathParameter.token;
