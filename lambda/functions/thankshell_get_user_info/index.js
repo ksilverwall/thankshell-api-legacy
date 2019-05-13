@@ -1,43 +1,75 @@
 let Auth = require('thankshell-libs/auth.js');
 let AWS = require("aws-sdk");
 
-let getUsetInfo = async(userId) => {
-    return {
-        'code': 'SUCCESS',
-        'name': userId,
-    };
-};
+// FIXME: Register to auth module
+let getUserInfo = async(claims) => {
+    let userId;
+    let dynamo = new AWS.DynamoDB.DocumentClient();
 
-let getHandler = mainProcess => {
-    return async (event, context, callback) => {
-        let statusCode;
-        let data;
+    if (claims.identities) {
+        let identities = JSON.parse(claims.identities);
 
-        try {
-            let userId = await Auth.getUserId(event.requestContext.authorizer.claims);
-            if (userId) {
-                statusCode = 200;
-                data = await mainProcess(userId);
-            } else {
-                statusCode = 403;
-                data = {
-                    "message": "user id not found",
-                };
-            }
-        } catch(err) {
-            console.log(err);
-            statusCode = 500;
-            data = {
-                "message": err.message,
+        let authId = identities.providerName + ':' + identities.userId;
+        let result = await dynamo.get({
+            TableName: 'thankshell_user_links',
+            Key:{
+                'auth_id': authId,
+            },
+        }).promise();
+
+        if (!result.Item) {
+            return {
+                status: 'UNREGISTERED',
             };
         }
 
+        userId = result.Item['user_id'];
+    } else {
+        userId = claims['cognito:username'];
+    }
+
+    let result = await dynamo.get({
+        TableName: 'thankshell_users',
+        Key:{
+            'user_id': userId,
+        },
+    }).promise();
+
+    if (result.Item) {
+        return result.Item;
+    } else {
         return {
-            statusCode: statusCode,
-            headers: {"Access-Control-Allow-Origin": "*"},
-            body: JSON.stringify(data),
+            status: 'UNREGISTERED',
+            'user_id': userId,
         };
+    }
+};
+
+let getUsetInfo = async(event) => {
+    return {
+        statusCode: 200,
+        data: await getUserInfo(event.requestContext.authorizer.claims),
     };
 };
 
-exports.handler = getHandler(getUsetInfo);
+exports.handler = async (event, context, callback) => {
+    try {
+        let result = await getUsetInfo(event);
+
+        return {
+            statusCode: result.statusCode,
+            headers: {"Access-Control-Allow-Origin": "*"},
+            body: JSON.stringify(result.data),
+        };
+    } catch(err) {
+        console.log(err);
+
+        return {
+            statusCode: 500,
+            headers: {"Access-Control-Allow-Origin": "*"},
+            body: JSON.stringify({
+                "message": err.message,
+            }),
+        };
+    }
+};

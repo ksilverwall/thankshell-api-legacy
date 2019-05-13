@@ -4,9 +4,11 @@ let util = require('util');
 
 class TransactionController
 {
-    constructor(tableInfo) {
+    constructor(tableInfo, groupInfo) {
         this.dynamo = new AWS.DynamoDB.DocumentClient();
         this.tableInfo = tableInfo;
+        this.groupInfo = groupInfo;
+        this.reserved = ['--'];
     }
 
     async getCarried(account) {
@@ -56,14 +58,13 @@ class TransactionController
 
     async create(xdata) {
         let date = +(new Date());
-        let accountManager = new AccountManager();
 
-        if (!(await accountManager.isExists(xdata.from))) {
-            throw new Error("送金元アカウントが無効です");
+        if (!this.validAccount(xdata.from)) {
+            throw new Error(`送金元${xdata.from}が無効です`);
         }
 
-        if (!(await accountManager.isExists(xdata.to))) {
-            throw new Error("送金先アカウントが無効です");
+        if (!this.validAccount(xdata.to)) {
+            throw new Error(`送金先${xdata.to}が無効です`);
         }
 
         if (xdata.from === xdata.to) {
@@ -131,12 +132,15 @@ class TransactionController
             Item: item
         }).promise();
     }
+
+    validAccount(account) {
+        return this.groupInfo.bank_id == account
+                || this.reserved.includes(account)
+                || this.groupInfo.members.values.includes(account);
+    }
 }
 
-/**
- * FIXME: Move to Auth
- */
-let isAdmin = async(dynamo, groupId, userId) => {
+let getGroupInfo = async(dynamo, groupId) => {
     let data = await dynamo.get({
         TableName: 'thankshell_groups',
             Key:{
@@ -144,36 +148,8 @@ let isAdmin = async(dynamo, groupId, userId) => {
             }
     }).promise();
 
-    return data.Item.admin.values.includes(userId);
+    return data.Item;
 };
-
-class AccountManager {
-    constructor(){
-        this.poolId = 'ap-northeast-1_A6SNCzbmM';
-        this.cognito = new AWS.CognitoIdentityServiceProvider({
-            apiVersion: '2016-04-18',
-            region: 'ap-northeast-1'
-        });
-    }
-
-    async isExists(username) {
-        if (!username) {
-            return false;
-        }
-
-        const reservedAccounts = ['sla_bank', '--'];
-        if(reservedAccounts.indexOf(username) !== -1) {
-            return true;
-        }
-
-        let user = await this.cognito.adminGetUser({
-            UserPoolId: this.poolId,
-            Username: username
-        }).promise();
-
-        return user.Enabled;
-    }
-}
 
 let getTableInfo = (stage) => {
     let tableInfoList = {
@@ -196,22 +172,72 @@ let getTableInfo = (stage) => {
     return tableInfoList[stage];
 };
 
-let createTransaction = async(userId, pathParameter, body, stage) => {
-    let controller = new TransactionController(getTableInfo(stage));
-    let transaction = {};
+let createTransaction = async(event) => {
+    let userId = await Auth.getUserId(event.requestContext.authorizer.claims);
+    if(!userId) {
+        return {
+            statusCode: 403,
+            data: {
+                "message": "user id not found",
+            },
+        };
+    }
+
+    let token = event.pathParameters.token;
+    let body = JSON.parse(event.body);
+    let tableInfo = getTableInfo(event.stageVariables.transaction_database);
+
+    if (!token || !body.amount) {
+        return {
+            statusCode: 403,
+            data: {
+                "code": "ILLIGAL_PARAMETERS",
+                "message": "パラメータが誤っています",
+            },
+        };
+    }
+
     let groupId = 'sla';
     let dynamo = new AWS.DynamoDB.DocumentClient();
+    let groupInfo = await getGroupInfo(dynamo, groupId);
 
-    if(!await isAdmin(dynamo, groupId, userId)) {
+    if(!groupInfo.admins.values.includes(userId)) {
         throw new Error("この取引を発行する権限がありません");
     }
-    transaction.token = pathParameter.token;
+
+    let controller = new TransactionController(tableInfo, groupInfo);
+
+    let transaction = {};
+    transaction.token = token;
     transaction.from = '--';
-    transaction.to = body.to;
+    transaction.to = groupInfo.bank_id;
     transaction.amount = parseInt(body.amount, 10);
     transaction.comment = body.comment ? body.comment : ' ';
 
     await controller.create(transaction);
+    return {
+        statusCode: 200,
+        data: {},
+    };
 };
 
-exports.handler = Auth.getHandler(createTransaction);
+exports.handler = async(event, context, callback) => {
+    try {
+        let result = await createTransaction(event);
+        return {
+            statusCode: result.statusCode,
+            headers: {"Access-Control-Allow-Origin": "*"},
+            body: JSON.stringify(result.data),
+        };
+    } catch(err) {
+        console.log(err);
+
+        return {
+            statusCode: 500,
+            headers: {"Access-Control-Allow-Origin": "*"},
+            body: JSON.stringify({
+                'message': err.message,
+            }),
+        };
+    }
+};

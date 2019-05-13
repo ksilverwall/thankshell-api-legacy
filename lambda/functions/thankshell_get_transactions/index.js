@@ -99,7 +99,7 @@ let isAdmin = async(dynamo, groupId, userId) => {
             }
     }).promise();
 
-    return data.Item.admin.values.includes(userId);
+    return data.Item.admins.values.includes(userId);
 };
 
 let getTransactions = async(userId, event) => {

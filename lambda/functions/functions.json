@@ -45,6 +45,15 @@
     ]
   },
   {
+    "FunctionName": "thankshell_get_group_info",
+    "Layers": [
+      {
+        "Arn": "arn:aws:lambda:ap-northeast-1:027569216980:layer:thankshell-libs:10",
+        "CodeSize": 1368
+      }
+    ]
+  },
+  {
     "FunctionName": "thankshell_get_token_holders",
     "Layers": [
       {
@@ -63,6 +72,24 @@
     ]
   },
   {
+    "FunctionName": "thankshell_add_group_member",
+    "Layers": [
+      {
+        "Arn": "arn:aws:lambda:ap-northeast-1:027569216980:layer:thankshell-libs:10",
+        "CodeSize": 1368
+      }
+    ]
+  },
+  {
+    "FunctionName": "thankshell_delete_group_request",
+    "Layers": [
+      {
+        "Arn": "arn:aws:lambda:ap-northeast-1:027569216980:layer:thankshell-libs:10",
+        "CodeSize": 1368
+      }
+    ]
+  },
+  {
     "FunctionName": "thankshell_get_user_info",
     "Layers": [
       {
@@ -72,11 +99,29 @@
     ]
   },
   {
+    "FunctionName": "thankshell_create_group_request",
+    "Layers": [
+      {
+        "Arn": "arn:aws:lambda:ap-northeast-1:027569216980:layer:thankshell-libs:10",
+        "CodeSize": 1368
+      }
+    ]
+  },
+  {
+    "FunctionName": "thankshell_create_user",
+    "Layers": [
+      {
+        "Arn": "arn:aws:lambda:ap-northeast-1:027569216980:layer:thankshell-libs:10",
+        "CodeSize": 1368
+      }
+    ]
+  },
+  {
     "FunctionName": "thankshell_create_transaction",
     "Layers": [
       {
-        "Arn": "arn:aws:lambda:ap-northeast-1:027569216980:layer:thankshell-libs:8",
-        "CodeSize": 1290
+        "Arn": "arn:aws:lambda:ap-northeast-1:027569216980:layer:thankshell-libs:10",
+        "CodeSize": 1368
       }
     ]
   },
