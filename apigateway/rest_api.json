@@ -1,0 +1,12 @@
+{
+    "id": "7sq9flro08",
+    "name": "Thankshell-API",
+    "description": "API",
+    "createdDate": 1551191776,
+    "apiKeySource": "HEADER",
+    "endpointConfiguration": {
+        "types": [
+            "EDGE"
+        ]
+    }
+}

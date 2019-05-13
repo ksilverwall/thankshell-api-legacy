@@ -1,0 +1,160 @@
+{
+    "items": [
+        {
+            "id": "1y75k4",
+            "parentId": "fdrqi6",
+            "pathPart": "requests",
+            "path": "/groups/{group}/requests"
+        },
+        {
+            "id": "37l59c",
+            "parentId": "kh7kue",
+            "pathPart": "{token}",
+            "path": "/transactions/{token}",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {}
+            }
+        },
+        {
+            "id": "3bdl7h",
+            "parentId": "mb6n1xnxk0",
+            "pathPart": "groups",
+            "path": "/groups"
+        },
+        {
+            "id": "4kqjk6",
+            "parentId": "1y75k4",
+            "pathPart": "{user}",
+            "path": "/groups/{group}/requests/{user}",
+            "resourceMethods": {
+                "DELETE": {},
+                "OPTIONS": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "5tvdsa",
+            "parentId": "dq0ey0",
+            "pathPart": "published",
+            "path": "/token/{token}/published",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {}
+            }
+        },
+        {
+            "id": "dj9jti",
+            "parentId": "xgvimy",
+            "pathPart": "{user}",
+            "path": "/token/{token}/holders/{user}",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "dq0ey0",
+            "parentId": "t5v7mg",
+            "pathPart": "{token}",
+            "path": "/token/{token}"
+        },
+        {
+            "id": "enc2hy",
+            "parentId": "lyxs04",
+            "pathPart": "link",
+            "path": "/user/link",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "fdrqi6",
+            "parentId": "3bdl7h",
+            "pathPart": "{group}",
+            "path": "/groups/{group}",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "hg2kw6",
+            "parentId": "fdrqi6",
+            "pathPart": "members",
+            "path": "/groups/{group}/members"
+        },
+        {
+            "id": "i7s0b4",
+            "parentId": "dq0ey0",
+            "pathPart": "transactions",
+            "path": "/token/{token}/transactions",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {}
+            }
+        },
+        {
+            "id": "kh7kue",
+            "parentId": "mb6n1xnxk0",
+            "pathPart": "transactions",
+            "path": "/transactions"
+        },
+        {
+            "id": "lyxs04",
+            "parentId": "mb6n1xnxk0",
+            "pathPart": "user",
+            "path": "/user",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "mb6n1xnxk0",
+            "path": "/"
+        },
+        {
+            "id": "sv5fpt",
+            "parentId": "enc2hy",
+            "pathPart": "{type}",
+            "path": "/user/link/{type}",
+            "resourceMethods": {
+                "DELETE": {},
+                "OPTIONS": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "t5v7mg",
+            "parentId": "mb6n1xnxk0",
+            "pathPart": "token",
+            "path": "/token"
+        },
+        {
+            "id": "xgvimy",
+            "parentId": "dq0ey0",
+            "pathPart": "holders",
+            "path": "/token/{token}/holders",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "z93ph5",
+            "parentId": "hg2kw6",
+            "pathPart": "{user}",
+            "path": "/groups/{group}/members/{user}",
+            "resourceMethods": {
+                "OPTIONS": {},
+                "PUT": {}
+            }
+        }
+    ]
+}
